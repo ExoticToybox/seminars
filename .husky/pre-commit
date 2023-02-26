@@ -1,0 +1,47 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+set -e
+# install realpath with `brew install coreutils`
+ROOT_DIR=$(realpath "$(dirname "$0")"/..)
+TESTABLE_DIRECTORIES=("web/src")
+TESTABLE_DIRECTORIES_REGEX="($(IFS="|" && echo "${TESTABLE_DIRECTORIES[*]}"))"
+TESTABLE_EXTENTIONS=("ts" "tsx")
+TESTABLE_EXTENTIONS_REGEX="\.($(IFS="|" && echo "${TESTABLE_EXTENTIONS[*]}"))"
+UNTESTABLE_DIRECTORIES=("src/setup-tests" "src/types" "terraform", "web/src/graphql")
+UNTESTABLE_DIRECTORIES_REGEX="($(IFS="|" && echo "${UNTESTABLE_DIRECTORIES[*]}"))"
+UNTESTABLE_EXTENTION_PREFIXES=("d" "test" "untestable")
+UNTESTABLE_EXTENTION_PREFIXES_REGEX="\.($(IFS="|" && echo "${UNTESTABLE_EXTENTION_PREFIXES[*]}"))"
+
+EXIT_CODE=0
+for FILE_PATH in $(git diff --name-only --cached); do
+  if [[ ${FILE_PATH} =~ ^${TESTABLE_DIRECTORIES_REGEX}.*${TESTABLE_EXTENTIONS_REGEX}$ ]] \
+      && [[ ! ${FILE_PATH} =~ ^${UNTESTABLE_DIRECTORIES_REGEX}.*$ ]] \
+      && [[ ! ${FILE_PATH} =~ ^.*${UNTESTABLE_EXTENTION_PREFIXES_REGEX}${TESTABLE_EXTENTIONS_REGEX}$ ]]; then
+    DELETED=0
+    git diff --cached --quiet --diff-filter=d -- "${FILE_PATH}" || DELETED=$?
+    TEST_FILE_PATH=$(echo "${FILE_PATH}" | sed -r "s/^(.*)\/(.*)${TESTABLE_EXTENTIONS_REGEX}$/\1\/__tests__\/\2.test.\3/")
+    if [[ ${DELETED} -eq 0 ]]; then
+      if [[ -e "${ROOT_DIR}/${TEST_FILE_PATH}" ]]; then
+        echo "Remaining test file found: ${TEST_FILE_PATH}"
+        echo "Deleted source file path:  ${FILE_PATH}"
+        EXIT_CODE=1
+      fi
+    else
+      if [[ ! -e "${ROOT_DIR}/${TEST_FILE_PATH}" ]]; then
+        echo "No test file found of:   ${FILE_PATH}"
+        echo "Expected test file path: ${TEST_FILE_PATH}"
+        EXIT_CODE=1
+      fi
+    fi
+  fi
+done
+if [[ ${EXIT_CODE} -ne 0 ]]; then
+  exit "${EXIT_CODE}"
+fi
+cd web
+
+# format
+yarn format:fix
+
+# test
+yarn test

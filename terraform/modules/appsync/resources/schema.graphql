@@ -1,0 +1,26 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  retrieveUser(id: ID!): User
+  retrieveAllUsers: [User]
+}
+
+type Mutation {
+  createUser(
+    name: String!
+    birthday: AWSDate!
+    email: AWSEmail!
+    password: String!
+  ): User
+}
+
+type User {
+  id: ID!
+  name: String!
+  birthday: AWSDate!
+  email: AWSEmail!
+  password: String!
+}
