@@ -7,10 +7,10 @@ terraform {
     }
   }
   backend "s3" {
-    bucket  = "terraform-sample-tfstate"
+    bucket  = "seminars-terraform-tfstate"
     region  = "ap-northeast-1"
-    profile = "afterschool-terraform"
-    key     = "terraform.tfstate"
+    profile = "seminars-terraform"
+    key     = "YOURNAME.tfstate"
     encrypt = true
   }
 }
@@ -18,5 +18,5 @@ terraform {
 provider "aws" {
   region                   = "ap-northeast-1"
   shared_credentials_files = ["~/.aws/credentials"]
-  profile                  = "afterschool-terraform"
+  profile                  = "seminars-terraform"
 }

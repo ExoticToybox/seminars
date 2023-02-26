@@ -1,5 +1,5 @@
 locals {
-  project_name         = "graphql-test"
+  project_name         = "seminars-YOURNAME"
   project_name_for_uri = replace(local.project_name, "-", "_")
   datasource_name      = "datasource_${local.project_name_for_uri}"
 
